@@ -1,0 +1,34 @@
+/* MARGINALIA — page chrome around the canvas. The game itself is drawn on the
+   canvas; this only centres it on a dark library-green page. */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0f1f14;
+  min-height: 100vh;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+#game {
+  width: min(1280px, 100vw);
+  height: auto;
+  aspect-ratio: 1280 / 880;
+  display: block;
+  background: #122619;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.7);
+}
+
+#status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
