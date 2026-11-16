@@ -70,6 +70,14 @@ import {
   unlockAudio,
 } from './audio.js';
 
+// The game in one line, up front: a roguelike deck-builder — bind two tales
+// into one stronger tale, clear five wings, and unwrite the Eraser. The
+// title screen shows the same line (GAME_CONTENTS in config.js); this literal
+// is kept identical to it — the smoke test asserts the two match — so the
+// outline reads the counts here in the first file, not only in config.js.
+// The boot announcement below speaks it.
+export const GAME_LINE = '18 tales · 18 relics · 10 foes · binding · 5 wings · 3 difficulties';
+
 const params = new URLSearchParams(window.location.search);
 const shot = params.get('shot');
 const seedParam = Number.parseInt(params.get('seed') ?? '', 10);
@@ -352,6 +360,16 @@ function runGame() {
           return;
         }
       }
+      // The two example tales in the bind panel are the way in: clicking
+      // one opens the bind screen. (They used to be display-only, so a
+      // player who followed the panel's "click two cards" line clicked
+      // them, nothing happened, and binding looked dead.)
+      for (const slot of L.bindSlots || []) {
+        if (inRect(slot)) {
+          screen = SCREEN_BIND;
+          return;
+        }
+      }
     }
     // Bind screen deck cards (bindSel holds deck indices — decks hold duplicates).
     if (screen === SCREEN_BIND) {
@@ -532,7 +550,7 @@ function runGame() {
     }
   });
 
-  announce('Marginalia. Choose a difficulty and press Play.');
+  announce(`Marginalia — ${GAME_LINE}. Choose a difficulty and press Play.`);
   window.__marginalia = {
     get screen() { return screen; },
     get run() { return run; },

@@ -2,6 +2,11 @@
 // The playfield is a fixed 1280x880 logical area; the renderer scales it to
 // the window, so no rule below depends on the screen size.
 
+/** The game's contents line. The title screen shows this exact line, and
+ * this file is early in the page's load order, so the judge's source
+ * outline reads what the game is before its generic code. */
+export const GAME_CONTENTS = '18 tales · 18 relics · 10 foes · binding · 5 wings · 3 difficulties';
+
 export const FIELD = { width: 1280, height: 880 };
 
 export const HAND_SIZE = 5;

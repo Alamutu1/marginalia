@@ -3,7 +3,7 @@
 // all drawn from code. layoutFor() computes the same hit regions the renderer
 // paints, so clicks always land where the eye expects them.
 
-import { DIFFICULTIES, DIFFICULTY_ORDER, FIELD, FONT, FONT_UI, PALETTE } from './config.js';
+import { DIFFICULTIES, DIFFICULTY_ORDER, FIELD, FONT, FONT_UI, GAME_CONTENTS, PALETTE } from './config.js';
 import { anyCardById, cardById } from './cards.js';
 import { bossDef, enemyById } from './enemies.js';
 import { cardCost, enemyIntent } from './engine.js';
@@ -323,6 +323,38 @@ export function drawGlyph(ctx, id, cx, cy, s, color) {
       }
       break;
     }
+    case 'scroll': {
+      // A rolled scroll: a band with a curl at each end.
+      ctx.beginPath();
+      ctx.moveTo(cx - u * 0.7, cy - u * 0.4);
+      ctx.lineTo(cx + u * 0.7, cy - u * 0.4);
+      ctx.moveTo(cx - u * 0.7, cy + u * 0.4);
+      ctx.lineTo(cx + u * 0.7, cy + u * 0.4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx - u * 0.7, cy, u * 0.4, Math.PI / 2, (Math.PI * 3) / 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + u * 0.7, cy, u * 0.4, -Math.PI / 2, Math.PI / 2);
+      ctx.stroke();
+      break;
+    }
+    case 'ash': {
+      // A slashed feather with three ash motes falling from it.
+      ctx.beginPath();
+      ctx.moveTo(cx - u * 0.6, cy + u * 0.8);
+      ctx.lineTo(cx + u * 0.6, cy - u * 0.8);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(cx - u * 0.1, cy - u * 0.3, u * 0.45, u * 0.7, 0.6, 0, Math.PI * 2);
+      ctx.stroke();
+      for (const [dx, dy] of [[-0.4, 0.7], [0.1, 0.95], [0.55, 0.6]]) {
+        ctx.beginPath();
+        ctx.arc(cx + dx * u, cy + dy * u, u * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
     default: {
       ctx.beginPath();
       ctx.arc(cx, cy, u * 0.6, 0, Math.PI * 2);
@@ -578,6 +610,84 @@ function drawEnemy(ctx, def, cx, cy, s, phase) {
       ctx.fill();
       break;
     }
+    case 'crane': {
+      // A folded paper crane, facing right: diamond body, long neck to a
+      // small head, one wing, a tail. Its eyes sit on the head (skipEyes).
+      skipEyes = true;
+      ctx.lineWidth = 3;
+      // Tail, trailing left and down.
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.5, s * 0.05);
+      ctx.lineTo(-s * 0.95, s * 0.4);
+      ctx.stroke();
+      // Neck, curving up to the head.
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.45);
+      ctx.quadraticCurveTo(s * 0.1, -s * 0.85, s * 0.35, -s * 0.95);
+      ctx.stroke();
+      // Body: a diamond.
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.5);
+      ctx.lineTo(s * 0.55, 0);
+      ctx.lineTo(0, s * 0.45);
+      ctx.lineTo(-s * 0.55, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Wing.
+      ctx.fillStyle = 'rgba(20,12,6,0.22)';
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.1, -s * 0.2);
+      ctx.lineTo(s * 0.4, s * 0.1);
+      ctx.lineTo(-s * 0.1, s * 0.25);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = c;
+      // Head, a small triangle, with a beak.
+      ctx.beginPath();
+      ctx.moveTo(s * 0.25, -s * 0.95);
+      ctx.lineTo(s * 0.52, -s * 0.95);
+      ctx.lineTo(s * 0.38, -s * 0.78);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.5, -s * 0.92);
+      ctx.lineTo(s * 0.68, -s * 0.88);
+      ctx.stroke();
+      // One eye on the head.
+      ctx.fillStyle = '#1a1208';
+      ctx.beginPath();
+      ctx.arc(s * 0.38, -s * 0.9, s * 0.05, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'spider': {
+      // A shelf spider: round body, small head, eight bent legs.
+      ctx.strokeStyle = c;
+      ctx.lineWidth = Math.max(2, s * 0.09);
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 4; i += 1) {
+          const ay = -s * 0.25 + i * s * 0.22;
+          ctx.beginPath();
+          ctx.moveTo(side * s * 0.3, ay);
+          ctx.lineTo(side * s * 0.75, ay - s * 0.18);
+          ctx.lineTo(side * s * 1.0, ay + s * 0.28);
+          ctx.stroke();
+        }
+      }
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(20,12,6,0.7)';
+      ctx.beginPath();
+      ctx.arc(0, s * 0.1, s * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.42, s * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
     case 'eraser': {
       rr(ctx, -s * 0.9, -s * 0.6, s * 1.8, s * 1.2, s * 0.2);
       ctx.fill();
@@ -635,10 +745,13 @@ export function layoutFor(screen, view) {
     btn('howto', 490, 658, 145, 44, 'HOW TO PLAY');
     btn('options', 645, 658, 145, 44, 'OPTIONS');
     // Fanned hand of three cards, right side — stepped wide and barely
-    // tilted, so every name and rules line stays fully legible.
+    // tilted, so every name, rules line and kind tag stays fully legible.
+    // The step must clear the kind tag: it is right-aligned to card.x+w-10,
+    // so the next card must start past card.x+w-10 (step 126 gives ~8px).
+    // A step of 110 clipped "ATTACK" to "ATTAC" and the names too.
     const fan = ['thorn', 'bookmark', 'quill'];
     fan.forEach((id, i) => {
-      L.cards.push({ id, index: i, x: 920 + i * 110, y: 250 + Math.abs(i - 1) * 20, w: 128, h: 180, tilt: (i - 1) * 0.05 });
+      L.cards.push({ id, index: i, x: 894 + i * 126, y: 250 + Math.abs(i - 1) * 20, w: 128, h: 180, tilt: (i - 1) * 0.05 });
     });
   } else if (screen === SCREEN_HOWTO || screen === SCREEN_OPTIONS) {
     btn('back', 490, 780, 300, 48, 'BACK TO THE TITLE');
@@ -682,6 +795,8 @@ export function layoutFor(screen, view) {
     L.mapStrip = { x: 24, y: 392, w: 1232, h: 54 };
     L.movesStrip = { x: 24, y: 454, w: 1232, h: 52 };
     L.deckStrip = { x: 24, y: 514, w: 1232, h: 46 };
+    // V3 — the WIN/LOSE banner under the top bar (see drawWinLoseBanner).
+    L.winLoseBanner = { x: 0, y: 64, w: 1280, h: 20 };
     btn('endturn', 1090, 600, 150, 48, 'END TURN  [E]', { size: 16 });
     btn('pause', 1090, 24, 46, 34, 'II', { size: 15 });
     btn('mute', 1142, 24, 46, 34, view.muted ? 'MUTE' : 'SOUND', { size: 11 });
@@ -704,7 +819,7 @@ export function layoutFor(screen, view) {
       { x: 230, y: 520, w: 150, h: 200 },
     ];
     L.bindPreview = { x: 420, y: 520, w: 150, h: 200 };
-    btn('bind', 60, 740, 300, 44, 'BIND THESE TWO TALES', { size: 15, disabled: false });
+    btn('bind', 60, 740, 300, 44, 'PICK 2 TALES TO BIND', { size: 15, disabled: false });
     // Shop row, bottom right.
     const shop = view.shop || [];
     shop.forEach((offer, i) => {
@@ -719,7 +834,11 @@ export function layoutFor(screen, view) {
       const row = Math.floor(i / 7);
       L.bindCards.push({ id, index: i, x: 60 + col * 172, y: 240 + row * 190, w: 150, h: 170 });
     });
-    btn('bind', 60, 800, 300, 44, 'BIND THESE TWO TALES', { size: 15, disabled: !(view.bindSel && view.bindSel.length === 2) });
+    // The button states what to do until two tales are picked: a greyed
+    // "BIND THESE TWO TALES" told the player nothing about how to pick.
+    const selCount = (view.bindSel || []).length;
+    const bindLabel = selCount === 2 ? 'BIND THESE TWO TALES' : selCount === 1 ? 'PICK 1 MORE TALE' : 'PICK 2 TALES TO BIND';
+    btn('bind', 60, 800, 300, 44, bindLabel, { size: 15, disabled: selCount !== 2 });
     btn('done', 920, 800, 300, 44, 'DONE — KEEP MY DECK', { size: 15 });
   } else if (screen === SCREEN_SHOP) {
     const shop = view.shop || [];
@@ -964,8 +1083,11 @@ function screenTitle(ctx, view, layout) {
   text(ctx, '— the last librarian defends the library —', 640, 192, 24, '#fbf3dc', FONT, 'center', 'italic');
   text(ctx, 'WIN: reach the Fifth Wing and unwrite the Eraser', 640, 238, 18, '#e8dcc0', FONT_UI, 'center', '600');
   text(ctx, 'LOSE: your ink runs dry, or the library burns', 640, 266, 18, '#f2a594', FONT_UI, 'center', '600');
-  text(ctx, 'a complete game: 16 tales · 12 relics · binding · 5 wings · 3 difficulties', 640, 306, 16, PALETTE.gold, FONT_UI, 'center', '700');
-  text(ctx, 'Bind two tales into one stronger tale. Every fight shows the foe\u2019s intent — plan around it.', 640, 334, 14, '#d9c9a0', FONT_UI, 'center');
+  text(ctx, GAME_CONTENTS, 640, 306, 14, PALETTE.gold, FONT_UI, 'center', '700');
+  // Two lines, not one: the single line ran to x~999 and the fanned Thorn
+  // card hid its end ("it."). Each line now ends well left of the fan.
+  text(ctx, 'Bind two tales into one stronger tale.', 640, 334, 14, '#d9c9a0', FONT_UI, 'center');
+  text(ctx, 'Every fight shows the foe\u2019s intent — plan around it.', 640, 356, 14, '#d9c9a0', FONT_UI, 'center');
   // Fanned hand.
   for (const slot of layout.cards) {
     const card = cardById(slot.id);
@@ -998,7 +1120,7 @@ function screenHowto(ctx, view, layout) {
   const lines = [
     ['GOAL', 'Clear all five wings and unwrite the Eraser on floor 5. Lose all HP and the library burns.'],
     ['A TURN', 'Draw 5 tales. You have 3 ink each turn. Play a card by clicking it (or pressing 1-5). End your turn with E or the button.'],
-    ['THE FOE', 'Every enemy shows its intent: "Will chew 8". Block before a big hit, weaken and make it vulnerable before your big cards.'],
+    ['THE FOE', 'Every enemy shows its intent: "Will chew 8". Block before a big hit, weaken it to blunt its attacks, and make it vulnerable before your big cards.'],
     ['BINDING', 'After a fight, pick 1 of 3 new tales — then fuse any two cards into one stronger bound tale. Bound tales stay in your deck.'],
     ['RELICS', 'The Reading Room sells relics that bend the rules: free first cards, extra ink, heals after fights. Elites drop them too.'],
     ['THE ERASER', 'The boss has two phases. Below half health it erases one random card from your deck every turn. End it fast.'],
@@ -1068,11 +1190,33 @@ function screenMap(ctx, view, layout) {
   for (const b of layout.buttons) drawButton(ctx, b, view.hover);
 }
 
+/** V3 — the WIN/LOSE banner under the top bar (Tip 2): the play shot is
+ * the cover now, so the goal must be readable on the play HUD itself, in
+ * the game's real win/lose words — the same lines the title screen shows. */
+function drawWinLoseBanner(ctx) {
+  ctx.fillStyle = 'rgba(217,164,65,0.14)';
+  ctx.fillRect(0, 64, FIELD.width, 20);
+  ctx.fillStyle = 'rgba(138,109,59,0.8)';
+  ctx.fillRect(0, 83, FIELD.width, 1);
+  const win = 'WIN: unwrite the Eraser on Wing 5';
+  const sep = '  ·  ';
+  const lose = 'LOSE: your ink runs dry';
+  ctx.font = `700 16px ${FONT_UI}`;
+  const total = ctx.measureText(win + sep + lose).width;
+  let x = (FIELD.width - total) / 2;
+  text(ctx, win, x, 79, 16, PALETTE.goldBright, FONT_UI, 'left', '700');
+  x += ctx.measureText(win).width;
+  text(ctx, sep, x, 79, 16, '#d9c9a0', FONT_UI, 'left', '700');
+  x += ctx.measureText(sep).width;
+  text(ctx, lose, x, 79, 16, '#f2a594', FONT_UI, 'left', '700');
+}
+
 function screenPlay(ctx, view, layout) {
   const run = view.run;
   const fight = view.fight;
   drawBackground(ctx, 0.15);
   drawTopBar(ctx, view, layout);
+  drawWinLoseBanner(ctx);
   const intent = enemyIntent(fight);
   // Enemy stage.
   drawPanel(ctx, 380, 84, 520, 250, 'rgba(18,14,8,0.66)');
@@ -1159,7 +1303,7 @@ function screenDraft(ctx, view, layout) {
   // Bind panel.
   drawPanel(ctx, 40, 460, 580, 330, 'rgba(18,14,8,0.82)');
   text(ctx, 'BIND TWO TALES INTO ONE', 60, 492, 17, PALETTE.goldBright, FONT_UI, 'left', '700');
-  text(ctx, 'Click two cards from your deck below — the fused tale is stronger than both.', 60, 516, 13, '#d9c9a0', FONT_UI, 'left');
+  text(ctx, 'Press PICK 2 TALES below to open your deck — pick any two tales to fuse.', 60, 516, 13, '#d9c9a0', FONT_UI, 'left');
   const sel = view.bindSel || [];
   const deckPreview = run.deck.slice(0, 2);
   const slots = layout.bindSlots || [];
@@ -1291,15 +1435,16 @@ function screenWin(ctx, view, layout) {
   text(ctx, `GRADE ${s.grade}`, 640, 198, 36, PALETTE.goldBright, FONT, 'center', '700');
   text(ctx, `SCORE ${s.score}`, 640, 236, 24, '#fbf3dc', FONT_UI, 'center', '700');
   if (s.newBest) text(ctx, '★ NEW BEST ★', 640, 264, 15, PALETTE.goldBright, FONT_UI, 'center', '700');
-  // Stat boxes.
+  // Stat boxes — six now: the Eraser's phase is the boss's second element.
   const stats = [
     ['WINGS', `${s.floors}/5`],
     ['TALES PLAYED', s.cardsPlayed],
     ['BEST COMBO', `x${s.bestCombo}`],
     ['RELICS FOUND', s.relicsFound],
     ['GOLD EARNED', s.goldEarned],
+    ['ERASER', `PHASE ${s.bossPhase || 1}`],
   ];
-  stats.forEach(([label, value], i) => statBox(ctx, 90 + i * 232, 292, 210, 76, label, value));
+  stats.forEach(([label, value], i) => statBox(ctx, 90 + i * 185, 292, 175, 76, label, value));
   text(ctx, `${DIFFICULTIES[run.difficulty].name.toUpperCase()} — seed ${run.seed} — ${s.time} — +${s.overBest} over best`, 640, 404, 15, '#d9c9a0', FONT_UI, 'center', '600');
   // Last 3 runs.
   drawPanel(ctx, 90, 428, 560, 150, 'rgba(18,14,8,0.82)');

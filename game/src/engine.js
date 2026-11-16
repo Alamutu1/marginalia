@@ -34,6 +34,7 @@ export function createRun(rng, difficultyId, seed) {
     kills: 0,
     damageDealt: 0,
     erased: [],
+    bossPhase: 1,
     status: 'run',
     map: buildMap(rng),
     node: null,
@@ -85,13 +86,14 @@ export function startFight(run, rng, def) {
   const diff = DIFFICULTIES[run.difficulty];
   const enemy = scaledEnemy(run, def);
   if (hasRelic(run, 'snuffer')) enemy.vuln = 2;
+  const maxInk = INK_PER_TURN + (hasRelic(run, 'inkpot') ? 1 : 0) + (hasRelic(run, 'moth') ? 1 : 0);
   const fight = {
     enemy,
     hand: [],
     drawPile: seededShuffle(rng, run.deck.slice()),
     discardPile: [],
-    ink: INK_PER_TURN + (hasRelic(run, 'inkpot') ? 1 : 0),
-    maxInk: INK_PER_TURN + (hasRelic(run, 'inkpot') ? 1 : 0),
+    ink: maxInk,
+    maxInk,
     block: 0,
     weaken: 0,
     vuln: 0,
@@ -102,11 +104,12 @@ export function startFight(run, rng, def) {
     peeked: null,
     firstCardFreeUsed: false,
     firstAttackDone: false,
+    firstBlockDone: false,
     dmgMul: diff.dmgMul,
     rng,
   };
   if (hasRelic(run, 'lantern')) fight.block = 2;
-  drawCards(run, fight, HAND_SIZE);
+  drawCards(run, fight, HAND_SIZE + (hasRelic(run, 'candle') ? 1 : 0));
   if (hasRelic(run, 'silverbookmark') && run.deck.length > 0) {
     // The Silver Bookmark keeps the first tale of the deck in the opening hand.
     const first = run.deck[0];
@@ -159,7 +162,7 @@ function applyDamageToEnemy(run, fight, amount) {
 
 function applyDamageToPlayer(run, fight, amount) {
   let dmg = Math.max(0, amount);
-  if (fight.weaken > 0) dmg = Math.max(1, dmg - 2 * fight.weaken);
+  if (hasRelic(run, 'lens')) dmg = Math.max(1, dmg - 1);
   let dealt = dmg;
   if (fight.block > 0) {
     const absorbed = Math.min(fight.block, dmg);
@@ -199,8 +202,13 @@ export function playCard(run, fight, handIndex) {
     events.push({ type: 'ink', text: fx.ink > 0 ? `+${fx.ink} ink.` : `${fx.ink} ink.` });
   }
   if (fx.block) {
-    fight.block += fx.block;
-    events.push({ type: 'block', text: `+${fx.block} block.` });
+    let gain = fx.block;
+    if (hasRelic(run, 'thimble') && !fight.firstBlockDone) {
+      gain += 4;
+      fight.firstBlockDone = true;
+    }
+    fight.block += gain;
+    events.push({ type: 'block', text: `+${gain} block.` });
   }
   if (fx.heal) {
     const healed = Math.min(run.maxHp - run.hp, fx.heal);
@@ -233,7 +241,10 @@ export function playCard(run, fight, handIndex) {
       fight.nextBonus = 0;
     }
     if (!fight.firstAttackDone && hasRelic(run, 'quietquill')) attackDmg += 4;
-    if (fight.enemy.weaken > 0) attackDmg = Math.max(1, attackDmg - 2 * fight.enemy.weaken);
+    // Weaken on the attacker cuts its own outgoing damage: the player's
+    // Weaken (from enemy debuffs) blunts the player's attacks. Weaken on
+    // the enemy does NOT cut the player's damage — it blunts the enemy's.
+    if (fight.weaken > 0) attackDmg = Math.max(1, attackDmg - 2 * fight.weaken);
     const dealt = applyDamageToEnemy(run, fight, attackDmg);
     fight.firstAttackDone = true;
     run.combo += 1;
@@ -266,7 +277,8 @@ export function endTurn(run, fight) {
   const intent = enemyIntent(fight);
   const move = intent.current;
   if (move.kind === 'attack') {
-    const raw = Math.max(1, Math.round(move.dmg * fight.dmgMul));
+    // The enemy's own Weaken blunts its outgoing damage.
+    const raw = Math.max(1, Math.round(move.dmg * fight.dmgMul) - 2 * fight.enemy.weaken);
     const dealt = applyDamageToPlayer(run, fight, raw);
     events.push({ type: 'hurt', amount: dealt, text: `${fight.enemy.def.name} hits for ${dealt}.` });
   } else if (move.kind === 'block') {
@@ -302,6 +314,7 @@ export function endTurn(run, fight) {
   // Boss phase change at half health.
   if (fight.enemy.def.boss && fight.enemy.phase === 1 && fight.enemy.hp <= fight.enemy.maxHp / 2) {
     fight.enemy.phase = 2;
+    run.bossPhase = 2;
     fight.log.push('The Eraser splits in two — PHASE 2. It begins erasing your deck!');
     events.push({ type: 'phase', text: 'The Eraser enters phase 2!' });
   }
@@ -326,6 +339,11 @@ export function settleFightWin(run, fight) {
   run.kills += 1;
   run.floorsCleared += 1;
   if (hasRelic(run, 'rose')) run.hp = Math.min(run.maxHp, run.hp + 4);
+  if (hasRelic(run, 'wax')) run.hp = Math.min(run.maxHp, run.hp + 2);
+  if (hasRelic(run, 'ledger')) {
+    run.gold += 10;
+    run.goldEarned += 10;
+  }
   if (def.boss) {
     run.status = 'won';
     return { gold, draft: null };
@@ -450,6 +468,7 @@ export function runSummary(run) {
     damageDealt: run.damageDealt,
     bound: run.boundDeck.slice(),
     erased: run.erased.slice(),
+    bossPhase: run.bossPhase,
   };
 }
 

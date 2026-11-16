@@ -1,4 +1,4 @@
-// MARGINALIA — the 8 Inkblight foes plus the Eraser. Each enemy cycles a small
+// MARGINALIA — the 10 Inkblight foes plus the Eraser. Each enemy cycles a small
 // move pattern; every move carries the intent text the player sees ("Will chew 8").
 // hp/damage scale with the difficulty multipliers in config.js.
 
@@ -55,6 +55,24 @@ export const ENEMIES = [
       { kind: 'attack', dmg: 6, intent: 'Will scribble 6' },
       { kind: 'debuff', vuln: 2, intent: 'Will mock you (Vulnerable 2)' },
       { kind: 'attack', dmg: 10, intent: 'Will slash 10' },
+    ],
+  },
+  {
+    id: 'crane', name: 'Paper Crane', hp: 22, gold: 14, shape: 'crane', color: '#e8dcc0',
+    blurb: 'Folded from a love letter, and it remembers.',
+    moves: [
+      { kind: 'attack', dmg: 5, intent: 'Will fold 5' },
+      { kind: 'attack', dmg: 7, intent: 'Will peck 7' },
+      { kind: 'debuff', weaken: 1, intent: 'Will crease you (Weaken 1)' },
+    ],
+  },
+  {
+    id: 'spider', name: 'Shelf Spider', hp: 24, gold: 16, shape: 'spider', color: '#6b5a8a',
+    blurb: 'It binds the shelves in silk.',
+    moves: [
+      { kind: 'attack', dmg: 6, intent: 'Will bite 6' },
+      { kind: 'debuff', vuln: 1, intent: 'Will web you (Vulnerable 1)' },
+      { kind: 'attack', dmg: 8, intent: 'Will scuttle 8' },
     ],
   },
   {
