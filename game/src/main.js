@@ -306,8 +306,8 @@ function runGame() {
     const bound = bindInRun(run, bindSel[0], bindSel[1]);
     if (bound) {
       sfxBind();
-      say(`Bound: ${bound.name}!`);
-      announce(`Bound ${bound.name}.`);
+      say(`Bound: ${bound.name.replace(/^Bound /, '')}!`);
+      announce(`Bound ${bound.name.replace(/^Bound /, '')}.`);
     }
     bindSel = [];
     bindPreviewCard = null;

@@ -405,10 +405,13 @@ export function drawCard(ctx, card, x, y, w, h, opts = {}) {
     ctx.fill();
   }
   if (opts.tag) {
-    rr(ctx, x + w / 2 - 44, y + h - 26, 88, 20, 10);
+    // A bound card's gold bottom bar sits at y+h-8; a pill at y+h-26
+    // visually merges into it, so a bound card's pill sits 8px higher.
+    const tagY = card.kind === 'bound' ? y + h - 34 : y + h - 26;
+    rr(ctx, x + w / 2 - 44, tagY, 88, 20, 10);
     ctx.fillStyle = PALETTE.gold;
     ctx.fill();
-    text(ctx, opts.tag, x + w / 2, y + h - 12, 11, '#241a08', FONT_UI, 'center', '700');
+    text(ctx, opts.tag, x + w / 2, tagY + 14, 11, '#241a08', FONT_UI, 'center', '700');
   }
 }
 
