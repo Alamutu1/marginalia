@@ -1,4 +1,4 @@
-// MARGINALIA — the 10 relics. Each one bends one rule of the run: cheaper cards,
+// MARGINALIA — the 12 relics. Each one bends one rule of the run: cheaper cards,
 // more ink, a peek at the future, a heal after every fight. Relics are found in
 // the shop, after elites, and sometimes in the draft.
 
@@ -13,6 +13,8 @@ export const RELICS = [
   { id: 'snuffer', name: 'Candle Snuffer', price: 85, desc: 'Foes start each fight with Vulnerable 2.' },
   { id: 'satchel', name: 'Leather Satchel', price: 60, desc: '+40 gold right now.' },
   { id: 'quietquill', name: 'Quiet Quill', price: 80, desc: 'Your first attack each fight deals +4 damage.' },
+  { id: 'lantern', name: 'Candle Lantern', price: 80, desc: 'Start each fight with +2 block.' },
+  { id: 'glue', name: 'Binder\u2019s Glue', price: 85, desc: 'Bound tales cost 1 less ink.' },
 ];
 
 export const RELIC_MAP = Object.fromEntries(RELICS.map((r) => [r.id, r]));

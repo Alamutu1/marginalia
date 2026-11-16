@@ -71,6 +71,15 @@ export function scaledEnemy(run, def) {
   };
 }
 
+/** The ink a card costs to play, after relics: the Brass Quill makes the
+ * first card of a fight free, and Binder's Glue makes bound tales 1 cheaper. */
+export function cardCost(run, fight, card) {
+  let cost = card.cost;
+  if (hasRelic(run, 'brassquill') && !fight.firstCardFreeUsed) cost = 0;
+  if (card.kind === 'bound' && hasRelic(run, 'glue')) cost = Math.max(0, cost - 1);
+  return cost;
+}
+
 /** Open a fight against an enemy definition. Applies fight-start relics. */
 export function startFight(run, rng, def) {
   const diff = DIFFICULTIES[run.difficulty];
@@ -96,6 +105,7 @@ export function startFight(run, rng, def) {
     dmgMul: diff.dmgMul,
     rng,
   };
+  if (hasRelic(run, 'lantern')) fight.block = 2;
   drawCards(run, fight, HAND_SIZE);
   if (hasRelic(run, 'silverbookmark') && run.deck.length > 0) {
     // The Silver Bookmark keeps the first tale of the deck in the opening hand.
@@ -168,8 +178,7 @@ export function playCard(run, fight, handIndex) {
   if (id === undefined) return events;
   const card = anyCardById(id);
   if (!card) return events;
-  let cost = card.cost;
-  if (hasRelic(run, 'brassquill') && !fight.firstCardFreeUsed) cost = 0;
+  const cost = cardCost(run, fight, card);
   if (fight.ink < cost) {
     events.push({ type: 'denied', text: 'Not enough ink.' });
     return events;
@@ -438,6 +447,7 @@ export function runSummary(run) {
     relicsFound: run.relicsFound,
     goldEarned: run.goldEarned,
     kills: run.kills,
+    damageDealt: run.damageDealt,
     bound: run.boundDeck.slice(),
     erased: run.erased.slice(),
   };

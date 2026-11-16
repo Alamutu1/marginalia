@@ -1,4 +1,4 @@
-// MARGINALIA — the 14 tale-cards. Every card is named for what it does, and its
+// MARGINALIA — the 16 tale-cards. Every card is named for what it does, and its
 // effect is data: { dmg, dmgAll, block, draw, heal, ink, discard, weaken, vuln,
 // nextBonus, peek }. The engine reads the effect; the renderer reads the text.
 
@@ -17,6 +17,8 @@ export const CARDS = [
   { id: 'jacket', name: 'Dust Jacket', cost: 2, kind: 'skill', text: 'Gain 12 block. Lose 1 ink.', fx: { block: 12, ink: -1 } },
   { id: 'footnote', name: 'Footnote', cost: 1, kind: 'attack', text: 'Deal 2. Apply Vulnerable 2.', fx: { dmg: 2, vuln: 2 } },
   { id: 'colophon', name: 'Colophon', cost: 2, kind: 'attack', text: 'Deal 1 per card in your discard pile.', fx: { perDiscard: 1 } },
+  { id: 'vellum', name: 'Vellum Shield', cost: 1, kind: 'skill', text: 'Gain 10 block. Draw 1 card.', fx: { block: 10, draw: 1 } },
+  { id: 'storm', name: 'Ink Storm', cost: 2, kind: 'attack', text: 'Deal 4 damage to all foes. Gain 1 ink.', fx: { dmgAll: 4, ink: 1 } },
 ];
 
 export const CARD_MAP = Object.fromEntries(CARDS.map((c) => [c.id, c]));
@@ -35,6 +37,8 @@ export const BIND_TABLE = {
   'margin+thorn': { name: 'Annotated Lash', text: 'Deal 12. Your next card deals +4.' },
   'catalogue+colophon': { name: 'The Full Index', text: 'Deal 2 per discard card. Peek the next draw.' },
   'jacket+torn': { name: 'Torn Cover', text: 'Deal 12. Gain 10 block. Discard 1.' },
+  'bookmark+vellum': { name: 'Gilded Margin', text: 'Gain 18 block. Draw 1 card.' },
+  'quill+torn': { name: 'Torn Quill', text: 'Deal 15 damage. Discard 1 card. Gain 1 ink.' },
 };
 
 /** Fuse two cards into one bound card. Named fusions above win; anything else

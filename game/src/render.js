@@ -6,7 +6,7 @@
 import { DIFFICULTIES, DIFFICULTY_ORDER, FIELD, FONT, FONT_UI, PALETTE } from './config.js';
 import { anyCardById, cardById } from './cards.js';
 import { bossDef, enemyById } from './enemies.js';
-import { enemyIntent } from './engine.js';
+import { cardCost, enemyIntent } from './engine.js';
 import { relicById } from './relics.js';
 
 export const SCREEN_TITLE = 'title';
@@ -301,6 +301,28 @@ export function drawGlyph(ctx, id, cx, cy, s, color) {
       ctx.fill();
       break;
     }
+    case 'vellum': {
+      // A shield outline: straight top, curved sides meeting at a point.
+      ctx.beginPath();
+      ctx.moveTo(cx - u * 0.7, cy - u * 0.8);
+      ctx.lineTo(cx + u * 0.7, cy - u * 0.8);
+      ctx.lineTo(cx + u * 0.7, cy + u * 0.1);
+      ctx.quadraticCurveTo(cx + u * 0.7, cy + u * 0.7, cx, cy + u);
+      ctx.quadraticCurveTo(cx - u * 0.7, cy + u * 0.7, cx - u * 0.7, cy + u * 0.1);
+      ctx.closePath();
+      ctx.stroke();
+      break;
+    }
+    case 'storm': {
+      // Three slashing rain strokes.
+      for (let i = -1; i <= 1; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(cx + i * u * 0.55 - u * 0.25, cy - u * 0.85);
+        ctx.lineTo(cx + i * u * 0.55 + u * 0.25, cy + u * 0.85);
+        ctx.stroke();
+      }
+      break;
+    }
     default: {
       ctx.beginPath();
       ctx.arc(cx, cy, u * 0.6, 0, Math.PI * 2);
@@ -383,6 +405,8 @@ function drawEnemy(ctx, def, cx, cy, s, phase) {
   ctx.fillStyle = c;
   ctx.strokeStyle = 'rgba(20,12,6,0.7)';
   ctx.lineWidth = 3;
+  // Set by a shape that draws its own eyes (the hound's sit on its head).
+  let skipEyes = false;
   switch (def.shape) {
     case 'worm': {
       for (let i = 0; i < 4; i += 1) {
@@ -457,19 +481,82 @@ function drawEnemy(ctx, def, cx, cy, s, phase) {
       break;
     }
     case 'hound': {
+      // An ink hound, facing right: tail, four legs, long body, head with a
+      // snout and two pointed ears, ink dripping off it. Drawn in its own
+      // dark violet; its eyes sit on the head, not the body (see skipEyes).
+      skipEyes = true;
+      ctx.strokeStyle = c;
+      ctx.lineWidth = Math.max(3, s * 0.13);
+      // Tail, curling up from the rear.
       ctx.beginPath();
-      ctx.ellipse(0, s * 0.2, s * 0.85, s * 0.5, 0, 0, Math.PI * 2);
+      ctx.moveTo(-s * 0.78, s * 0.05);
+      ctx.quadraticCurveTo(-s * 1.15, -s * 0.15, -s * 1.05, -s * 0.55);
+      ctx.stroke();
+      // Four legs down to the ground line.
+      for (const lx of [-0.55, -0.32, 0.38, 0.58]) {
+        ctx.beginPath();
+        ctx.moveTo(lx * s, s * 0.35);
+        ctx.lineTo(lx * s, s * 0.82);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(20,12,6,0.7)';
+      // Body.
+      ctx.beginPath();
+      ctx.ellipse(0, s * 0.15, s * 0.8, s * 0.45, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      // Head.
       ctx.beginPath();
-      ctx.arc(s * 0.75, -s * 0.35, s * 0.42, 0, Math.PI * 2);
+      ctx.arc(s * 0.72, -s * 0.38, s * 0.38, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      // Snout, tapering to the right, with a dark nose.
       ctx.beginPath();
-      ctx.moveTo(s * 0.55, -s * 0.65);
-      ctx.lineTo(s * 0.5, -s * 1.05);
-      ctx.lineTo(s * 0.85, -s * 0.7);
+      ctx.moveTo(s * 0.95, -s * 0.55);
+      ctx.lineTo(s * 1.32, -s * 0.4);
+      ctx.lineTo(s * 1.32, -s * 0.14);
+      ctx.lineTo(s * 0.95, -s * 0.2);
       ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#1a1208';
+      ctx.beginPath();
+      ctx.arc(s * 1.28, -s * 0.32, s * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = c;
+      // Two pointed ears.
+      ctx.beginPath();
+      ctx.moveTo(s * 0.5, -s * 0.62);
+      ctx.lineTo(s * 0.45, -s * 1.02);
+      ctx.lineTo(s * 0.78, -s * 0.68);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.82, -s * 0.68);
+      ctx.lineTo(s * 0.95, -s * 1.05);
+      ctx.lineTo(s * 1.08, -s * 0.62);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Ink drips under the body and off the snout.
+      ctx.fillStyle = c;
+      for (const [dx, dy, dr] of [[-0.3, 0.72, 0.07], [0.05, 0.78, 0.05], [1.2, 0.05, 0.06]]) {
+        ctx.beginPath();
+        ctx.arc(dx * s, dy * s, dr * s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Eyes on the head.
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(s * 0.6, -s * 0.48, s * 0.09, 0, Math.PI * 2);
+      ctx.arc(s * 0.86, -s * 0.5, s * 0.09, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1a1208';
+      ctx.beginPath();
+      ctx.arc(s * 0.63, -s * 0.48, s * 0.045, 0, Math.PI * 2);
+      ctx.arc(s * 0.89, -s * 0.5, s * 0.045, 0, Math.PI * 2);
       ctx.fill();
       break;
     }
@@ -515,17 +602,20 @@ function drawEnemy(ctx, def, cx, cy, s, phase) {
       ctx.stroke();
     }
   }
-  // Eyes — every Inkblight thing watches the librarian.
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(-s * 0.22, -s * 0.15, s * 0.11, 0, Math.PI * 2);
-  ctx.arc(s * 0.22, -s * 0.15, s * 0.11, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#1a1208';
-  ctx.beginPath();
-  ctx.arc(-s * 0.22, -s * 0.15, s * 0.05, 0, Math.PI * 2);
-  ctx.arc(s * 0.22, -s * 0.15, s * 0.05, 0, Math.PI * 2);
-  ctx.fill();
+  // Eyes — every Inkblight thing watches the librarian, unless the shape
+  // drew its own (the hound's eyes sit on its head).
+  if (!skipEyes) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-s * 0.22, -s * 0.15, s * 0.11, 0, Math.PI * 2);
+    ctx.arc(s * 0.22, -s * 0.15, s * 0.11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1a1208';
+    ctx.beginPath();
+    ctx.arc(-s * 0.22, -s * 0.15, s * 0.05, 0, Math.PI * 2);
+    ctx.arc(s * 0.22, -s * 0.15, s * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -544,10 +634,11 @@ export function layoutFor(screen, view) {
     btn('play', 490, 592, 300, 56, 'PLAY — OPEN THE LIBRARY', { size: 20 });
     btn('howto', 490, 658, 145, 44, 'HOW TO PLAY');
     btn('options', 645, 658, 145, 44, 'OPTIONS');
-    // Fanned hand of three cards, right side.
+    // Fanned hand of three cards, right side — stepped wide and barely
+    // tilted, so every name and rules line stays fully legible.
     const fan = ['thorn', 'bookmark', 'quill'];
     fan.forEach((id, i) => {
-      L.cards.push({ id, index: i, x: 1000 + i * 62 - 60, y: 250 + Math.abs(i - 1) * 26, w: 150, h: 210, tilt: (i - 1) * 0.1 });
+      L.cards.push({ id, index: i, x: 920 + i * 110, y: 250 + Math.abs(i - 1) * 20, w: 128, h: 180, tilt: (i - 1) * 0.05 });
     });
   } else if (screen === SCREEN_HOWTO || screen === SCREEN_OPTIONS) {
     btn('back', 490, 780, 300, 48, 'BACK TO THE TITLE');
@@ -583,10 +674,14 @@ export function layoutFor(screen, view) {
     let x = (FIELD.width - total) / 2;
     fight.hand.forEach((id, i) => {
       const card = anyCardById(id);
-      const cost = card.cost === 0 || (view.run.relics.includes('brassquill') && !fight.firstCardFreeUsed) ? 0 : card.cost;
+      const cost = cardCost(view.run, fight, card);
       L.handCards.push({ id, index: i, x, y: 648, w: cw, h: 210, playable: fight.ink >= cost });
       x += cw + gap;
     });
+    // The three density strips painted between the panels and the relics row.
+    L.mapStrip = { x: 24, y: 392, w: 1232, h: 54 };
+    L.movesStrip = { x: 24, y: 454, w: 1232, h: 52 };
+    L.deckStrip = { x: 24, y: 514, w: 1232, h: 46 };
     btn('endturn', 1090, 600, 150, 48, 'END TURN  [E]', { size: 16 });
     btn('pause', 1090, 24, 46, 34, 'II', { size: 15 });
     btn('mute', 1142, 24, 46, 34, view.muted ? 'MUTE' : 'SOUND', { size: 11 });
@@ -597,9 +692,12 @@ export function layoutFor(screen, view) {
     const total = draft.length * cw + (draft.length - 1) * 16;
     let x = (FIELD.width - total) / 2;
     draft.forEach((id, i) => {
-      L.draftCards.push({ id, index: i, x, y: 148, w: cw, h: 268 });
+      L.draftCards.push({ id, index: i, x, y: 148, w: cw, h: 232 });
       x += cw + 16;
     });
+    // Deck + next-wing strips between the draft cards and the bind/shop panels.
+    L.draftDeckStrip = { x: 40, y: 390, w: 1200, h: 32 };
+    L.forecastStrip = { x: 40, y: 428, w: 1200, h: 30 };
     // Bind panel: two slots + preview, bottom left.
     L.bindSlots = [
       { x: 60, y: 520, w: 150, h: 200 },
@@ -636,6 +734,18 @@ export function layoutFor(screen, view) {
     btn('restart', 340, 800, 180, 48, 'R — READ AGAIN', { size: 15 });
     btn('sameseed', 550, 800, 180, 48, 'S — SAME SEED', { size: 15 });
     btn('menu', 760, 800, 180, 48, 'ESC — MENU', { size: 15 });
+    if (screen === SCREEN_WIN) {
+      // The finished deck as a fanned row of mini-cards (see screenWin).
+      // A real run can end with up to ~17 tales, so the mini-cards shrink
+      // to fit the row instead of running off the right edge.
+      const deck = view.run.deck;
+      const gap = 6;
+      const maxW = 1200;
+      const mw = Math.max(48, Math.min(88, Math.floor((maxW - (deck.length - 1) * gap) / deck.length)));
+      const total = deck.length * mw + (deck.length - 1) * gap;
+      L.finalDeck = { x: (FIELD.width - total) / 2, y: 682, w: total, h: 92, cardW: mw, gap };
+      L.recapLine = { x: 0, y: 668, w: FIELD.width, h: 18 };
+    }
   } else if (screen === SCREEN_PAUSED) {
     btn('resume', 490, 420, 300, 48, 'RESUME  [P]', { size: 17 });
     btn('restart', 490, 482, 300, 48, 'RESTART  [R]', { size: 17 });
@@ -696,13 +806,165 @@ function drawInkOrbs(ctx, fight, x, y) {
   text(ctx, `${fight.ink}/${fight.maxInk}`, x + fight.maxInk * 30 + 12, y + 21, 14, '#fbf3dc', FONT_UI, 'left', '700');
 }
 
+/** One grouped deck line: "Thorn Lash ×2 · Quill Jab · Bookmark ×2 …" */
+function deckLine(run) {
+  const counts = new Map();
+  const order = [];
+  for (const id of run.deck) {
+    const card = anyCardById(id);
+    const name = card ? card.name : id;
+    if (!counts.has(name)) {
+      counts.set(name, 0);
+      order.push(name);
+    }
+    counts.set(name, counts.get(name) + 1);
+  }
+  return order.map((n) => (counts.get(n) > 1 ? `${n} ×${counts.get(n)}` : n)).join(' · ');
+}
+
+/** Truncate a line to maxW (caller sets ctx.font first), with an ellipsis. */
+function fitLine(ctx, str, maxW) {
+  if (ctx.measureText(str).width <= maxW) return str;
+  let s = str;
+  while (s.length > 0 && ctx.measureText(`${s} …`).width > maxW) {
+    const cut = s.lastIndexOf(' · ');
+    s = cut > 0 ? s.slice(0, cut) : s.slice(0, -1);
+  }
+  return s ? `${s} …` : '…';
+}
+
+/** One map node's label for the forecast strip — same lookup as screenMap. */
+function nodeLabel(opt) {
+  if (opt.kind === 'fight' || opt.kind === 'elite') {
+    const e = enemyById(opt.enemy);
+    return `${opt.kind === 'elite' ? 'ELITE' : 'FIGHT'} — ${e ? e.name : opt.enemy}`;
+  }
+  if (opt.kind === 'boss') return 'BOSS — The Eraser';
+  if (opt.kind === 'rest') return 'QUIET SHELF — rest & heal';
+  if (opt.kind === 'shop') return 'READING ROOM — shop';
+  return opt.kind.toUpperCase();
+}
+
+/** A1 — the wing-progress map strip: all 5 wings, node kinds, cleared ✓,
+ * current ◆, boss ★. Makes the map system visible in the play shot. */
+function drawMapStrip(ctx, run, r) {
+  drawPanel(ctx, r.x, r.y, r.w, r.h, 'rgba(18,14,8,0.82)');
+  const cw = r.w / 5;
+  run.map.forEach((wing, i) => {
+    const x = r.x + i * cw;
+    const current = i + 1 === run.floor;
+    const cleared = i + 1 < run.floor;
+    if (current) {
+      ctx.fillStyle = 'rgba(217,164,65,0.16)';
+      ctx.fillRect(x + 1, r.y + 1, cw - 2, r.h - 2);
+    }
+    if (i > 0) {
+      ctx.fillStyle = 'rgba(138,109,59,0.5)';
+      ctx.fillRect(x, r.y + 8, 1, r.h - 16);
+    }
+    const mark = cleared ? '✓' : current ? '◆' : '·';
+    const color = cleared ? PALETTE.greenSoft : current ? PALETTE.goldBright : PALETTE.muted;
+    text(ctx, `${mark} WING ${i + 1} — ${wing.label.toUpperCase()}`, x + 12, r.y + 22, 12, color, FONT_UI, 'left', '700');
+    const kinds = wing.options.map((o) => (o.kind === 'boss' ? 'BOSS ★' : o.kind.toUpperCase())).join(' · ');
+    text(ctx, kinds, x + 12, r.y + 42, 11, current ? '#fbf3dc' : '#d9c9a0', FONT_UI, 'left');
+  });
+}
+
+/** A2 — the foe's full move pattern, from def.moves, with numbers. */
+function drawMovesStrip(ctx, fight, r) {
+  const moves = enemyIntent(fight).moves;
+  const def = fight.enemy.def;
+  const name = def.boss ? 'THE ERASER' : def.name.toUpperCase();
+  drawPanel(ctx, r.x, r.y, r.w, r.h, 'rgba(18,14,8,0.78)');
+  const parts = moves.map((m) => {
+    const t = m.intent.replace(/^Will /, '');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  });
+  ctx.font = `700 12px ${FONT_UI}`;
+  const label = `${name}'S MOVES — `;
+  const labelW = ctx.measureText(label).width;
+  ctx.font = `14px ${FONT_UI}`;
+  const line = fitLine(ctx, parts.join(' · '), r.w - 24 - labelW);
+  text(ctx, label, r.x + 12, r.y + 22, 12, PALETTE.gold, FONT_UI, 'left', '700');
+  text(ctx, line, r.x + 12 + labelW, r.y + 22, 14, '#e8dcc0', FONT_UI, 'left');
+  text(ctx, def.blurb, r.x + 12, r.y + 42, 12, PALETTE.muted, FONT_UI, 'left', 'italic');
+}
+
+/** A3 / A4 — a slim deck line: label in gold, grouped card names after it. */
+function drawDeckStrip(ctx, run, r, label) {
+  drawPanel(ctx, r.x, r.y, r.w, r.h, 'rgba(18,14,8,0.78)');
+  const by = r.h >= 40 ? r.y + 30 : r.y + 21;
+  ctx.font = `700 13px ${FONT_UI}`;
+  const labelW = ctx.measureText(label).width;
+  ctx.font = `13px ${FONT_UI}`;
+  const line = fitLine(ctx, deckLine(run), r.w - 24 - labelW);
+  text(ctx, label, r.x + 12, by, 13, PALETTE.gold, FONT_UI, 'left', '700');
+  text(ctx, line, r.x + 12 + labelW, by, 13, '#e8dcc0', FONT_UI, 'left');
+}
+
+/** A4 (forecast) — the next wing's real node options, so the draft/bind
+ * choice is made knowing what comes next. After clearing floor N, the next
+ * wing is run.map[N] (0-indexed). */
+function drawForecastStrip(ctx, run, r) {
+  const next = run.map[run.floor];
+  drawPanel(ctx, r.x, r.y, r.w, r.h, 'rgba(18,14,8,0.82)');
+  if (!next) {
+    text(ctx, 'NEXT — THE LIBRARY IS YOURS', r.x + 12, r.y + 21, 13, PALETTE.goldBright, FONT_UI, 'left', '700');
+    return;
+  }
+  ctx.font = `700 13px ${FONT_UI}`;
+  const label = `NEXT — WING ${run.floor + 1} · ${next.label.toUpperCase()}: `;
+  const labelW = ctx.measureText(label).width;
+  ctx.font = `13px ${FONT_UI}`;
+  const line = fitLine(ctx, next.options.map(nodeLabel).join('   ·   '), r.w - 24 - labelW);
+  text(ctx, label, r.x + 12, r.y + 21, 13, PALETTE.goldBright, FONT_UI, 'left', '700');
+  text(ctx, line, r.x + 12 + labelW, r.y + 21, 13, '#fbf3dc', FONT_UI, 'left');
+}
+
+/** A5 — one mini-card of the finished deck: glyph + name on a parchment
+ * face; bound tales get a gold edge and a ✦. */
+function drawMiniCard(ctx, id, x, y, w, h) {
+  const card = anyCardById(id);
+  if (!card) return;
+  const bound = card.kind === 'bound';
+  rr(ctx, x, y, w, h, 6);
+  ctx.fillStyle = bound ? '#f7e8b8' : PALETTE.paper;
+  ctx.fill();
+  ctx.strokeStyle = bound ? PALETTE.gold : '#8a6d3b';
+  ctx.lineWidth = bound ? 3 : 1.5;
+  ctx.stroke();
+  const baseId = card.id.startsWith('bound:') ? 'colophon' : card.id;
+  drawGlyph(ctx, baseId, x + w / 2, y + 24, 30, '#2a2118');
+  if (bound) text(ctx, '✦', x + w - 10, y + 16, 13, PALETTE.gold, FONT_UI, 'right', '700');
+  // Name, centred, up to two lines.
+  ctx.font = `700 11px ${FONT_UI}`;
+  const lines = [];
+  let cur = '';
+  for (const wd of card.name.split(' ')) {
+    const test = cur ? `${cur} ${wd}` : wd;
+    if (ctx.measureText(test).width > w - 8 && cur) {
+      lines.push(cur);
+      cur = wd;
+    } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  lines.slice(0, 2).forEach((ln, i) => text(ctx, ln, x + w / 2, y + 62 + i * 14, 11, PALETTE.ink, FONT_UI, 'center', '700'));
+}
+
+/** A5 — the finished deck as a fanned row of mini-cards: the trophy. */
+function drawFinalDeckFan(ctx, run, r) {
+  run.deck.forEach((id, i) => {
+    drawMiniCard(ctx, id, r.x + i * (r.cardW + r.gap), r.y, r.cardW, r.h);
+  });
+}
+
 function screenTitle(ctx, view, layout) {
   drawBackground(ctx, 0.35);
   text(ctx, 'MARGINALIA', 640, 150, 84, PALETTE.goldBright, FONT, 'center', '700');
   text(ctx, '— the last librarian defends the library —', 640, 192, 24, '#fbf3dc', FONT, 'center', 'italic');
   text(ctx, 'WIN: reach the Fifth Wing and unwrite the Eraser', 640, 238, 18, '#e8dcc0', FONT_UI, 'center', '600');
   text(ctx, 'LOSE: your ink runs dry, or the library burns', 640, 266, 18, '#f2a594', FONT_UI, 'center', '600');
-  text(ctx, 'a complete game: 14 tales · 10 relics · binding · 5 wings · 3 difficulties', 640, 306, 16, PALETTE.gold, FONT_UI, 'center', '700');
+  text(ctx, 'a complete game: 16 tales · 12 relics · binding · 5 wings · 3 difficulties', 640, 306, 16, PALETTE.gold, FONT_UI, 'center', '700');
   text(ctx, 'Bind two tales into one stronger tale. Every fight shows the foe\u2019s intent — plan around it.', 640, 334, 14, '#d9c9a0', FONT_UI, 'center');
   // Fanned hand.
   for (const slot of layout.cards) {
@@ -850,10 +1112,16 @@ function screenPlay(ctx, view, layout) {
   text(ctx, `DRAW ${fight.drawPile.length} · DISCARD ${fight.discardPile.length}`, 40, 316, 13, '#d9c9a0', FONT_UI, 'left');
   // Log, right.
   drawLog(ctx, fight, 930, 84, 326, 300);
-  // Peek line.
-  if (fight.peeked) {
+  // Density strips in the dead band: the wing map, the foe's move pattern,
+  // the deck. They sit between the panels and the relics row.
+  drawMapStrip(ctx, run, layout.mapStrip);
+  drawMovesStrip(ctx, fight, layout.movesStrip);
+  drawDeckStrip(ctx, run, layout.deckStrip, `DECK ${run.deck.length} — `);
+  // Peek line, below the deck strip (hidden while a message shows, so the
+  // two never print on top of each other).
+  if (fight.peeked && !view.message) {
     const pc = anyCardById(fight.peeked);
-    text(ctx, `CATALOGUE: next draw is ${pc ? pc.name : fight.peeked}.`, 640, 420, 14, PALETTE.goldBright, FONT_UI, 'center', '600');
+    text(ctx, `CATALOGUE: next draw is ${pc ? pc.name : fight.peeked}.`, 640, 578, 14, PALETTE.goldBright, FONT_UI, 'center', '600');
   }
   // Relics row above hand.
   drawRelicsRow(ctx, run, 40, 600);
@@ -884,6 +1152,10 @@ function screenDraft(ctx, view, layout) {
     const picked = view.draftPickedId === slot.id;
     drawCard(ctx, card, slot.x, slot.y, slot.w, slot.h, { playable: true, tag: picked ? 'TAKEN' : undefined, selected: picked });
   }
+  // Deck strip + next-wing forecast between the draft cards and the
+  // bind/shop panels — the gap is now game content, not dead space.
+  drawDeckStrip(ctx, run, layout.draftDeckStrip, `YOUR DECK — ${run.deck.length} TALES — `);
+  drawForecastStrip(ctx, run, layout.forecastStrip);
   // Bind panel.
   drawPanel(ctx, 40, 460, 580, 330, 'rgba(18,14,8,0.82)');
   text(ctx, 'BIND TWO TALES INTO ONE', 60, 492, 17, PALETTE.goldBright, FONT_UI, 'left', '700');
@@ -1050,8 +1322,11 @@ function screenWin(ctx, view, layout) {
   }
   text(ctx, 'NEXT GOAL: win on Forbidden', 640, 612, 17, PALETTE.goldBright, FONT_UI, 'center', '700');
   text(ctx, 'The Eraser erased ' + (s.erased.length ? s.erased.map((id) => (anyCardById(id) || { name: id }).name).join(', ') : 'nothing') + ' this run.', 640, 640, 13, '#a89878', FONT_UI, 'center');
+  // Run recap + the finished deck as a fanned trophy row.
+  text(ctx, `RUN RECAP — ${s.kills} foes unwritten · ${s.damageDealt} damage dealt`, 640, 668, 14, '#fbf3dc', FONT_UI, 'center', '600');
+  drawFinalDeckFan(ctx, run, layout.finalDeck);
   for (const b of layout.buttons) drawButton(ctx, b, view.hover);
-  text(ctx, 'R — READ AGAIN (new run) · S — SAME SEED · ESC — MENU', 640, 780, 13, '#c9b890', FONT_UI, 'center');
+  text(ctx, 'R — READ AGAIN (new run) · S — SAME SEED · ESC — MENU', 640, 790, 13, '#c9b890', FONT_UI, 'center');
 }
 
 function screenLose(ctx, view, layout) {

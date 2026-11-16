@@ -21,7 +21,7 @@ Then open http://localhost:8080/index.html in a desktop browser. No build step, 
 - Every enemy shows its intent ("Will chew 8") — block before a big hit, weaken and make it vulnerable before your big cards.
 - Win a fight to draft 1 of 3 new tales, then optionally BIND two cards into one stronger bound tale (e.g. Thorn Lash + Nettle Fan = Bramble Fan), and buy relics in the Reading Room with gold.
 - The Eraser, the boss of the Fifth Wing, has two phases: below half health it erases one random card from your deck every turn. End it fast.
-- 14 tale-cards, 10 relics, 8 foes + the boss, 5 wings, 3 difficulties (Dusty, Archival, Forbidden), seeds, run history, grades, and WebAudio synth sound.
+- 16 tale-cards, 12 relics, 8 foes + the boss, 5 wings, 3 difficulties (Dusty, Archival, Forbidden), seeds, run history, grades, and WebAudio synth sound.
 - P pauses, M mutes, R restarts, S replays the same seed, Esc returns to the menu.
 - The game is fully deterministic: `?seed=N` fixes the run, and `?shot=title|play|draft|win` stages a screenshot scene.
 

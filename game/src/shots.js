@@ -140,8 +140,9 @@ function stageWin(seed) {
   run.relicsFound = 3;
   run.relics = ['brassquill', 'inkpot', 'rose'];
   run.kills = 5;
+  run.damageDealt = 214;
   run.deck = ['thorn', 'quill', 'bookmark', 'dogear', 'torn', 'footnote', 'inkwell', 'root', 'flower', 'margin', 'bound:thorn+nettle'];
-  run.boundDeck = ['bound:thorn+nettle', 'bound:bookmark+jacket'];
+  run.boundDeck = ['bound:thorn+nettle', 'bound:bookmark+jacket', 'bound:quill+torn'];
   run.erased = ['dogear'];
   run.status = 'won';
   const s = runSummary(run);
